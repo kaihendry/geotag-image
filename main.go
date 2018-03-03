@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/apex/log"
-	"github.com/gorilla/csrf"
 	"github.com/gorilla/pat"
 	"github.com/tajtiattila/metadata/exif"
 )
@@ -79,7 +78,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 }
 
 func getStatic(w http.ResponseWriter, r *http.Request) {
-	log.Infof("Requested: %s", r.URL.Path[1:])
+	// log.Infof("Requested: %s", r.URL.Path[1:])
 	http.ServeFile(w, r, "dist/"+r.URL.Path[1:])
 }
 
@@ -94,13 +93,7 @@ func main() {
 	app.Get("/favicon.ico", http.HandlerFunc(getStatic))
 	app.Get("/", index)
 
-	var options []csrf.Option
-
-	// Uncomment below only if developing locally
-	options = append(options, csrf.Secure(false))
-
-	if err := http.ListenAndServe(addr,
-		csrf.Protect([]byte("geotag"), options...)(app)); err != nil {
+	if err := http.ListenAndServe(addr, app); err != nil {
 		log.WithError(err).Fatal("error listening")
 	}
 
@@ -108,7 +101,5 @@ func main() {
 
 func index(w http.ResponseWriter, r *http.Request) {
 	t := template.Must(template.New("").ParseGlob("dist/*.html"))
-	t.ExecuteTemplate(w, "index.html", map[string]interface{}{
-		csrf.TemplateTag: csrf.TemplateField(r),
-	})
+	t.ExecuteTemplate(w, "index.html", nil)
 }

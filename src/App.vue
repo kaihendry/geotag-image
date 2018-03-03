@@ -1,17 +1,43 @@
 <template>
   <div id="app">
-    <img src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+<form action="/upload" enctype="multipart/form-data" method="post">
+<input type="file" required name="jpeg" />
+<br>
+<label>Lat: <input type="number" step="any" name=lat required v-model.number.lazy="mapCenter.lat" /></label>
+<label>Lng: <input type="number" step="any" name=lng required v-model.number.lazy="mapCenter.lng" /></label>
+<input type="submit" value="Report" />
+</form>
+</div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-
 export default {
   name: 'app',
-  components: {
-    HelloWorld
+  data: function() {
+    return {
+      mapCenter: {
+        lat: 1.38,
+        lng: 103.8,
+      }
+    };
+  },
+  created: function () {
+    console.log('a is: ' + this.mapCenter)
+    if(navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        console.log(position.coords.latitude, position.coords.longitude)
+        this.mapCenter.lat = position.coords.latitude
+        this.mapCenter.lng = position.coords.longitude
+      })
+    }
+  },
+  methods: {
+    updateCenter(newCenter) {
+      this.mapCenter = {
+        lat: newCenter.lat(),
+        lng: newCenter.lng(),
+      }
+    }
   }
 }
 </script>
@@ -21,8 +47,5 @@ export default {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
 }
 </style>
