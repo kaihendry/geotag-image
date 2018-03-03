@@ -7,6 +7,17 @@
 <label>Lng: <input type="number" step="any" name=lng required v-model.number.lazy="mapCenter.lng" /></label>
 <input type="submit" value="Report" />
 </form>
+
+
+<gmap-map
+  :center="mapCenter" 
+  :zoom="12"
+   map-type-id="terrain"
+  @center_changed="updateCenter"
+  style="width: 500px; height: 300px"
+></gmap-map>
+
+
 </div>
 </template>
 
@@ -33,6 +44,7 @@ export default {
   },
   methods: {
     updateCenter(newCenter) {
+      console.log("Slow?")
       this.mapCenter = {
         lat: newCenter.lat(),
         lng: newCenter.lng(),
