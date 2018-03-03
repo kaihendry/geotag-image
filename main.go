@@ -78,12 +78,20 @@ func upload(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func getStatic(w http.ResponseWriter, r *http.Request) {
+	log.Infof("Requested: %s", r.URL.Path[1:])
+	http.ServeFile(w, r, "dist/"+r.URL.Path[1:])
+}
+
 func main() {
 
 	addr := ":" + os.Getenv("PORT")
 	app := pat.New()
 
 	app.Post("/", upload)
+	app.Get("/js/", http.HandlerFunc(getStatic))
+	app.Get("/css/", http.HandlerFunc(getStatic))
+	app.Get("/favicon.ico", http.HandlerFunc(getStatic))
 	app.Get("/", index)
 
 	var options []csrf.Option
@@ -99,7 +107,7 @@ func main() {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	t := template.Must(template.New("").ParseGlob("templates/*.html"))
+	t := template.Must(template.New("").ParseGlob("dist/*.html"))
 	t.ExecuteTemplate(w, "index.html", map[string]interface{}{
 		csrf.TemplateTag: csrf.TemplateField(r),
 	})
