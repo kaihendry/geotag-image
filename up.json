@@ -2,9 +2,12 @@
 	"name": "geotag",
 	"profile": "mine",
 	"regions": ["ap-southeast-1"],
+	"hooks": {
+		"predeploy": "npm run build"
+	},
 	"stages": {
-		"staging": {
-			"domain": "g.natalian.org"
-		}
-}
+		"staging": { "domain": "g.natalian.org" },
+		"production": { "domain": "geo.natalian.org" }
+	},
+	"error_pages": { "disable": true }
 }

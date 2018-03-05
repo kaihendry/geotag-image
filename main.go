@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -14,12 +13,27 @@ import (
 
 func upload(w http.ResponseWriter, r *http.Request) {
 
-	r.ParseMultipartForm(0)
+	err := r.ParseMultipartForm(0)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 
-	r.ParseForm()
+	// log.Infof("%+v", r.Form)
+	// log.Infof("%+v", r.PostForm)
 
-	fmt.Println("Lat:", r.Form["lat"])
-	fmt.Println("Lng:", r.Form["lng"])
+	if len(r.Form["lat"]) == 0 {
+		http.Error(w, "missing latitude", 400)
+		return
+	}
+
+	if len(r.Form["lng"]) == 0 {
+		http.Error(w, "missing longitude", 400)
+		return
+	}
+
+	log.Infof("Lat: %v Lng: %v", r.Form["lat"], r.Form["lng"])
+
 	lat, err := strconv.ParseFloat(r.Form["lat"][0], 64)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -41,7 +55,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	buff := make([]byte, 512)
 	_, err = file.Read(buff)
 	filetype := http.DetectContentType(buff)
-	fmt.Println(filetype)
+	log.Infof("Upload filetype: %s", filetype)
 
 	if filetype != "image/jpeg" {
 		http.Error(w, "Upload not a JPEG", 400)
@@ -78,7 +92,6 @@ func upload(w http.ResponseWriter, r *http.Request) {
 }
 
 func getStatic(w http.ResponseWriter, r *http.Request) {
-	// log.Infof("Requested: %s", r.URL.Path[1:])
 	http.ServeFile(w, r, "dist/"+r.URL.Path[1:])
 }
 
