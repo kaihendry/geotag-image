@@ -1,16 +1,86 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<link rel="shortcut icon" href="<%= webpackConfig.output.publicPath %>favicon.ico">
-<title>Geotag an image upload</title>
-</head>
-<body>
-<noscript>
-<strong>We're sorry but geotag doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
-</noscript>
-<div id="app"></div>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/gmap-vue@1.2.2/dist/gmap-vue.js"></script>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="data:," />
+    <title>Geotag an image upload</title>
+  </head>
+  <body>
+    <div id="app">
+      <form action="/upload" enctype="multipart/form-data" method="post">
+        <input type="file" required name="jpeg" />
+        <br />
+
+        <label>
+          Lat:
+          <input
+            type="number"
+            name="lat"
+            v-model.number.lazy="reportedMapCenter.lat"
+            @change="sync"
+            step="any"
+          />
+        </label>
+
+        <label>
+          Lng:
+          <input
+            type="number"
+            name="lng"
+            v-model.number.lazy="reportedMapCenter.lng"
+            @change="sync"
+            step="any"
+          />
+        </label>
+
+        <input type="submit" />
+        <p>
+          Please report issues to
+          <a href="https://github.com/kaihendry/geotag-image/issues"
+            >Geotag Github</a
+          >
+        </p>
+        <p>
+          <a
+            target="_blank"
+            :href="`https://maps.google.com/maps?q=${mapCenter.lat},${mapCenter.lng}`"
+            >Open maps</a
+          >
+        </p>
+      </form>
+
+      <gmap-map
+        :center="mapCenter"
+        :zoom="12"
+        ref="map"
+        @center_changed="updateCenter($refs.map.$mapObject.getCenter())"
+        :options="{disableDefaultUI : true}"
+        @dragend="sync"
+        @zoom_changed="sync"
+        class="map-container"
+      >
+        <div slot="visible">
+          <div
+            style="
+              height: 100%;
+              width: 100%;
+              display: block;
+              position: absolute;
+            "
+          >
+            <img
+              id="crosshairs"
+              src="./public/assets/crosshairs.gif"
+              style="width: 19px; height: 19px; border: 0; zindex: 100"
+            />
+          </div>
+        </div>
+      </gmap-map>
+    </div>
+    <script src="public/main.js"></script>
+  </body>
 </html>
