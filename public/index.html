@@ -12,7 +12,8 @@
   <body>
     <div id="app">
       <form action="/upload" enctype="multipart/form-data" method="post">
-        <input type="file" required name="jpeg" />
+        <label for="jpgupload">Select Image</label>
+        <input id="jpgupload" type="file" required name="jpeg" />
         <br />
 
         <label>
@@ -53,7 +54,7 @@
         </p>
       </form>
 
-      <gmap-map
+      <gmap-map style="width: 100%; height: 500px"
         :center="mapCenter"
         :zoom="12"
         ref="map"
@@ -63,22 +64,12 @@
         @zoom_changed="sync"
         class="map-container"
       >
-        <div slot="visible">
-          <div
-            style="
-              height: 100%;
-              width: 100%;
-              display: block;
-              position: absolute;
-            "
-          >
-            <img
-              id="crosshairs"
-              src="./public/assets/crosshairs.gif"
-              style="width: 19px; height: 19px; border: 0; zindex: 100"
-            />
-          </div>
-        </div>
+      <!-- create marker that's always in the center -->
+        <gmap-marker
+          :position="mapCenter"
+          @dragend="sync"
+        >
+        </gmap-marker>
       </gmap-map>
     </div>
     <script src="public/main.js"></script>

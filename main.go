@@ -20,6 +20,62 @@ import (
 //go:embed public
 var public embed.FS
 
+type server struct {
+	router *http.ServeMux
+}
+
+func newServer(local bool) *server {
+
+	s := &server{router: &http.ServeMux{}}
+
+	if local {
+		log.SetHandler(text.Default)
+	} else {
+		log.SetHandler(jsonhandler.Default)
+	}
+
+	directory, err := fs.Sub(public, "public")
+	if err != nil {
+		log.WithError(err).Fatal("unable to load public static files")
+	}
+	fileServer := http.FileServer(http.FS(directory))
+	s.router.Handle("/public/", http.StripPrefix("/public", fileServer))
+	s.router.Handle("/upload", s.upload())
+	s.router.Handle("/", s.index())
+
+	return s
+}
+
+func main() {
+
+	_, awsDetected := os.LookupEnv("AWS_LAMBDA_FUNCTION_NAME")
+	log.WithField("awsDetected", awsDetected).Info("starting up")
+
+	s := newServer(!awsDetected)
+
+	var err error
+
+	if awsDetected {
+		err = gateway.ListenAndServe("", s.router)
+	} else {
+		err = http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), s.router)
+	}
+	log.WithError(err).Fatal("error listening")
+
+}
+
+func (s *server) index() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		t := template.Must(template.New("").ParseFS(public, "public/index.html"))
+		w.Header().Add("Content-Type", "text/html")
+		err := t.ExecuteTemplate(w, "index.html", nil)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.WithError(err).Fatal("Failed to execute templates")
+		}
+	}
+}
+
 func (s *server) upload() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -65,11 +121,16 @@ func (s *server) upload() http.HandlerFunc {
 
 		buff := make([]byte, 512)
 		_, err = file.Read(buff)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		filetype := http.DetectContentType(buff)
+
 		log.Infof("Upload filetype: %s", filetype)
 
 		if filetype != "image/jpeg" {
-			http.Error(w, "Upload not a JPEG", 400)
+			http.Error(w, "Upload not a JPEG", http.StatusBadRequest)
 			return
 		}
 
@@ -100,62 +161,5 @@ func (s *server) upload() http.HandlerFunc {
 			return
 		}
 
-	}
-}
-
-type server struct {
-	router *http.ServeMux
-}
-
-func newServer(local bool) *server {
-
-	s := &server{router: &http.ServeMux{}}
-
-	if local {
-		log.SetHandler(text.Default)
-	} else {
-		log.SetHandler(jsonhandler.Default)
-	}
-
-	directory, err := fs.Sub(public, "public")
-	if err != nil {
-		log.WithError(err).Fatal("unable to load public static files")
-	}
-	fileServer := http.FileServer(http.FS(directory))
-	s.router.Handle("/public/", http.StripPrefix("/public", fileServer))
-	s.router.Handle("/upload", s.upload())
-	s.router.Handle("/", s.index())
-
-	return s
-}
-
-func main() {
-
-	_, awsDetected := os.LookupEnv("AWS_LAMBDA_FUNCTION_NAME")
-	log.WithField("awsDetected", awsDetected).Info("starting up")
-
-	s := newServer(!awsDetected)
-
-	var err error
-
-	if awsDetected {
-		log.Info("starting cloud server")
-		err = gateway.ListenAndServe("", s.router)
-	} else {
-		err = http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), s.router)
-	}
-	log.WithError(err).Fatal("error listening")
-
-}
-
-func (s *server) index() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		t := template.Must(template.New("").ParseFS(public, "public/index.html"))
-		w.Header().Add("Content-Type", "text/html")
-		err := t.ExecuteTemplate(w, "index.html", nil)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			log.WithError(err).Fatal("Failed to execute templates")
-		}
 	}
 }

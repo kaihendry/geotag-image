@@ -1,7 +1,6 @@
 Vue.use(GmapVue, {
   load: {
-    key: "AIzaSyD4VHBovJ2dnHSZpS-Y46hheA_JL6mtwZI",
-    libraries: "places", // This is required if you use the Autocomplete plugin
+    key: "AIzaSyBKfytmIV5szDPgIaTzMMd7xLKM2Aa1ivc",
   },
 });
 
